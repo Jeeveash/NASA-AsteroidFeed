@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Asteroid Tracker</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            color: #8a8a8a;
+            margin-bottom: 40px;
+        }
+
+        .asteroid-section {
+            margin-top: auto;
+            padding: 20px 0;
+        }
+
+        .section-title {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .asteroid-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding-bottom: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #666 #000;
+        }
+
+        .asteroid-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .asteroid-container::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        .asteroid-container::-webkit-scrollbar-thumb {
+            background: #666;
+            border-radius: 4px;
+        }
+
+        .asteroid-card {
+            flex: 0 0 300px;
+            background: rgba(50, 50, 50, 0.8);
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .asteroid-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .asteroid-card.named {
+            background: rgba(70, 70, 100, 0.8);
+        }
+
+        .asteroid-card.dangerous {
+            background: rgba(100, 50, 50, 0.8);
+        }
+
+        .asteroid-name {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .asteroid-info {
+            font-size: 0.9em;
+            color: #bbb;
+        }
+
+        .danger-badge {
+            display: inline-block;
+            background: #ff4444;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Solar System Asteroid Tracker</h1>
+        
+        <div class="asteroid-section">
+            <h2 class="section-title">All Asteroids</h2>
+            <div class="asteroid-container" id="all-asteroids"></div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchAsteroids() {
+            try {
+                const response = await fetch('/api/asteroids');
+                const data = await response.json();
+                renderAsteroids(data);
+            } catch (error) {
+                console.error('Error fetching asteroid data:', error);
+            }
+        }
+
+        function renderAsteroids(data) {
+            const container = document.getElementById('all-asteroids');
+            const allAsteroids = [
+                ...data.named,
+                ...data.dangerous.sort((a, b) => b.diameter - a.diameter),
+                ...data.non_dangerous.sort((a, b) => b.diameter - a.diameter)
+            ];
+            container.innerHTML = allAsteroids.map(asteroid => createAsteroidCard(asteroid)).join('');
+        }
+
+        function createAsteroidCard(asteroid) {
+            const cardClass = ["Ceres", "Vesta", "Pallas"].includes(asteroid.name) ? 'named' : (asteroid.is_dangerous ? 'dangerous' : '');
+            return `
+                <div class="asteroid-card ${cardClass}">
+                    <div class="asteroid-name">${asteroid.name}</div>
+                    <div class="asteroid-info">
+                        <p>Diameter: ${asteroid.diameter.toFixed(2)} meters</p>
+                        <p>First Observed: ${asteroid.first_observation}</p>
+                        ${asteroid.description ? `<p>${asteroid.description}</p>` : ''}
+                        ${asteroid.velocity ? `<p>Velocity: ${parseFloat(asteroid.velocity).toFixed(2)} km/h</p>` : ''}
+                        ${asteroid.is_dangerous ? '<div class="danger-badge">Potentially Hazardous</div>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initial load
+        fetchAsteroids();
+    </script>
+</body>
+</html>
